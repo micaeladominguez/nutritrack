@@ -28,9 +28,14 @@ export function FoodsList() {
           <h1 className="font-extrabold text-[34px] leading-none tracking-[-0.03em]">Mis alimentos</h1>
           <div className="text-[13px] text-ink-2 mt-1.5">{foods.length} en tu biblioteca</div>
         </div>
-        <Button onClick={() => setEditingId("new")} variant="primary" className="hidden md:inline-flex">
-          <Plus size={16} /> Agregar alimento
-        </Button>
+          <Button
+              onClick={() => setEditingId("new")}
+              variant="primary"
+              className="hidden md:inline-flex h-11 rounded-2xl px-5 gap-2"
+          >
+              <Plus size={16} />
+              Agregar alimento
+          </Button>
       </div>
 
       <div className="px-5 md:px-0 pb-3">

@@ -9,9 +9,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { clsx } from "@/lib/clsx";
 
 interface Props {
-  /** Wire to Supabase: `await supabase.auth.signInWithPassword({ email, password })` */
   onLogin?: (email: string, password: string) => Promise<void> | void;
-  /** Wire to Supabase: `await supabase.auth.signUp({ email, password, options: { data: { name } } })` */
   onRegister?: (name: string, email: string, password: string) => Promise<void> | void;
   isLoading?: boolean;
   error?: string | null;
@@ -85,7 +83,7 @@ export function LoginForm({ onLogin, onRegister, isLoading = false, error = null
         <form onSubmit={submit} className="flex flex-col gap-3.5">
           {mode === "register" && (
             <Field label="Nombre">
-              <TextInput value={name} onChange={setName} placeholder="Marcos" icon={<UserIcon size={18} />} />
+              <TextInput value={name} onChange={setName} placeholder="Insert Name" icon={<UserIcon size={18} />} />
             </Field>
           )}
           <Field label="Email">

@@ -137,7 +137,7 @@ export function AddMealSheet() {
         {!selected ? (
           results.length === 0 ? (
             <div className="p-8 text-center text-ink-3 text-sm">
-              Sin resultados. Probá con otra palabra o agregalo en "Mis alimentos".
+              Sin resultados. Probá con otra palabra o agregalo en &quot;Mis alimentos&quot;.
             </div>
           ) : (
             results.map((r) => (

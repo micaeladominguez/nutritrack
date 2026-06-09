@@ -20,9 +20,14 @@ export function RecipesList() {
           <h1 className="font-extrabold text-[34px] leading-none tracking-[-0.03em]">Mis recetas</h1>
           <div className="text-[13px] text-ink-2 mt-1.5">{recipes.length} guardadas</div>
         </div>
-        <Button onClick={() => setEditingId("new")} className="hidden md:inline-flex">
-          <Plus size={16} /> Nueva receta
-        </Button>
+          <Button
+              onClick={() => setEditingId("new")}
+              variant="primary"
+              className="hidden md:inline-flex h-11 rounded-2xl px-5 gap-2"
+          >
+              <Plus size={16} />
+              Nueva receta
+          </Button>
       </div>
 
       <div className="px-5 md:px-0 pb-3 md:hidden">

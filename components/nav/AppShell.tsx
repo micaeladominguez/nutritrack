@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, setUser } = useApp();
+  const { user, signOut } = useApp();
 
   const items = [...NAV, ...SIDEBAR_EXTRA];
 
@@ -67,12 +67,14 @@ function Sidebar() {
         <div className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-extrabold text-base tracking-tight">
           {(user?.name || "M")[0]}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-bold">{user?.name || "Marcos"}</div>
-          <div className="text-[11px] text-ink-3 truncate">{user?.email || "hola@nutritrack.app"}</div>
+        <div className="text-[13px] font-bold">
+          {user?.name || user?.email?.split("@")[0] || "Usuario"}
         </div>
         <button
-          onClick={() => { setUser(null); router.push("/login"); }}
+          onClick={async () => {
+            await signOut();
+            router.push("/login");
+          }}
           className="text-ink-3 hover:text-danger p-1"
           aria-label="Cerrar sesión"
         >

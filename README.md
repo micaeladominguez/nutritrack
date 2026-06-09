@@ -86,31 +86,22 @@ un modo, agregar `data-theme="dark"` o `data-theme="light"` en `<html>`.
 display). Instrument Serif solo para la **N** del wordmark — un único
 toque de serif que define la marca.
 
-## Conectar Supabase
+## Backend
 
-Toda la lógica de datos vive en `lib/store.tsx` (`AppProvider`). Para
-conectar un backend real, reemplazá cada `setter` por una mutación:
+El frontend usa la API REST de `nutritrackbff`. Copiá la configuración local:
 
-```ts
-// lib/store.tsx
-import { supabase } from "@/lib/supabase";
-
-const addEntry = useCallback(async (entry) => {
-  // optimistic
-  setEntries((xs) => [...xs, { ...entry, id: tempId() }]);
-  // persist
-  const { data, error } = await supabase
-    .from("meal_entries")
-    .insert(entry)
-    .select()
-    .single();
-  if (error) {
-    // rollback / toast
-  } else {
-    setEntries((xs) => xs.map((x) => (x.id === tempId() ? data : x)));
-  }
-}, []);
+```bash
+cp .env.local.example .env.local
 ```
+
+Por defecto la app consulta `http://localhost:8080`. Para otro ambiente:
+
+```env
+NEXT_PUBLIC_API_URL=https://api.example.com
+```
+
+La lógica HTTP vive en `lib/db.ts` y el estado de la aplicación en
+`lib/store.tsx`. El JWT se guarda en `localStorage` después de login o registro.
 
 ### Auth
 
@@ -124,18 +115,9 @@ isLoading?: boolean;
 error?: string | null;
 ```
 
-En `app/(auth)/login/page.tsx` está la implementación mock — reemplazá
-`fakeAuth` por:
-
-```ts
-const handleLogin = async (email: string, password: string) => {
-  setLoading(true); setError(null);
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) setError(error.message);
-  else router.push("/");
-  setLoading(false);
-};
-```
+`app/(auth)/login/page.tsx` usa `/api/auth/login` y `/api/auth/register`.
+Las rutas de la aplicación redirigen a `/login` cuando no hay token o la API
+rechaza la sesión.
 
 ## PWA
 
@@ -152,12 +134,9 @@ Para que se instale como app standalone hay que servirla por HTTPS
 
 ## Notas
 
-- **No hay backend incluido**. Los datos de ejemplo (`lib/sample-data.ts`)
-  se cargan en memoria al iniciar la sesión. Refrescá la página y volvés
-  al estado inicial.
-- **Routes guarded**: el login es opcional en este scaffold (vas directo
-  al Dashboard si visitás `/`). Para forzarlo, agregar un `middleware.ts`
-  que chequee la sesión de Supabase y redirija a `/login`.
+- **Backend separado**: `nutritrackbff` debe estar corriendo para iniciar
+  sesión y usar las pantallas con datos.
+- **Routes guarded**: el provider valida el JWT contra `/api/auth/me`.
 - **Calculador de macros** (`lib/macros.ts`): trabaja siempre con
   valores por 100 g/ml. Para recetas, normaliza por `finalWeight`.
 - Los íconos vienen de `lucide-react`. Si querés cambiar uno, importá
@@ -166,9 +145,5 @@ Para que se instale como app standalone hay que servirla por HTTPS
 ## Próximos pasos sugeridos
 
 1. Generar íconos PWA (192/512) y agregarlos a `public/`.
-2. Crear esquema en Supabase: `foods`, `recipes`, `recipe_ingredients`,
-   `meal_entries`, `measurements`, `daily_notes`, `goals`.
-3. Reemplazar `AppProvider` por queries/mutations contra Supabase.
-4. Agregar `middleware.ts` para proteger las rutas `(app)/*`.
-5. Configurar service worker para offline (Next.js 14 + `next-pwa` o
+2. Configurar service worker para offline (Next.js 14 + `next-pwa` o
    manual). El manifest ya está listo.

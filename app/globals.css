@@ -62,6 +62,7 @@
     --border: #2f2c25;
     --border-strong: #3e3a31;
     --primary: #9fc4ac;
+    --primary-hover: #8ab396;
     --primary-soft: #25342c;
     --on-primary: #14130f;
     --accent: #e89469;
@@ -88,6 +89,7 @@
   --border: #2f2c25;
   --border-strong: #3e3a31;
   --primary: #9fc4ac;
+  --primary-hover: #8ab396;
   --primary-soft: #25342c;
   --on-primary: #14130f;
   --accent: #e89469;
@@ -101,7 +103,8 @@
   --danger-soft: rgba(232, 148, 105, 0.16);
 }
 
-html, body {
+html,
+body {
   @apply bg-bg text-ink;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -109,7 +112,13 @@ html, body {
 }
 
 * {
+  box-sizing: border-box;
+  border-color: var(--border);
   -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100vh;
 }
 
 /* tabular numbers helper */
@@ -119,9 +128,91 @@ html, body {
 }
 
 /* hide-scrollbar */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
 
 /* form reset for cleaner inputs */
-input, textarea, select, button { font-family: inherit; }
-input:focus, textarea:focus, select:focus { outline: none; }
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* react-day-picker minimal NutriTrack skin */
+.rdp {
+  --rdp-cell-size: 36px;
+  --rdp-accent-color: var(--primary);
+  --rdp-background-color: var(--primary-soft);
+  --rdp-outline: none;
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+.rdp-months {
+  justify-content: center;
+}
+
+.rdp-caption {
+  padding: 0 0 8px;
+}
+
+.rdp-caption_label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+  text-transform: capitalize;
+}
+
+.rdp-nav_button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  color: var(--ink-2);
+}
+
+.rdp-head_cell {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.rdp-day {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.rdp-day:hover {
+  background: var(--surface-2);
+}
+
+.rdp-day_selected,
+.rdp-day_selected:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.rdp-day_today:not(.rdp-day_selected) {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.rdp-day_outside {
+  color: var(--ink-4);
+}
