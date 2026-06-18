@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { BigNum } from "@/components/ui/Stats";
 import { useApp } from "@/lib/store";
-import type { RecipeIngredient } from "@/lib/types";
+import { macrosForFood } from "@/lib/macros";
+import type { Food, RecipeIngredient } from "@/lib/types";
 
 interface Props {
   id: string | null;
@@ -23,6 +24,7 @@ export function RecipeEditor({ id, open, onClose }: Props) {
   const [name, setName] = useState("");
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
   const [finalWeight, setFinalWeight] = useState<string>("");
+  const [unit, setUnit] = useState<"g" | "unidad">("g");
   const [notes, setNotes] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -31,23 +33,45 @@ export function RecipeEditor({ id, open, onClose }: Props) {
       setName(existing?.name ?? "");
       setIngredients(existing?.ingredients ?? []);
       setFinalWeight(existing ? String(existing.finalWeight) : "");
+      setUnit(existing?.unit === "unidad" ? "unidad" : "g");
       setNotes(existing?.notes ?? "");
       setPickerOpen(false);
     }
   }, [open, existing]);
 
-  const totalIngWeight = ingredients.reduce((s, i) => s + (Number(i.grams) || 0), 0);
+  const rawWeightLabel = useMemo(() => {
+    let grams = 0;
+    let ml = 0;
+    let units = 0;
+
+    ingredients.forEach((ing) => {
+      const food = foods.find((f) => f.id === ing.foodId);
+      const amount = Number(ing.grams) || 0;
+      if (!food) return;
+      if (food.unit === "ml") ml += amount;
+      else if (food.unit === "unidad") units += amount;
+      else grams += amount;
+    });
+
+    const parts = [
+      grams > 0 ? `${grams.toFixed(0)} g` : null,
+      ml > 0 ? `${ml.toFixed(0)} ml` : null,
+      units > 0 ? `${units.toFixed(units % 1 === 0 ? 0 : 1)} ${units === 1 ? "unidad" : "unidades"}` : null,
+    ].filter(Boolean);
+
+    return parts.length ? parts.join(" + ") : null;
+  }, [ingredients, foods]);
 
   const computed = useMemo(() => {
     let kcal = 0, protein = 0, carbs = 0, fats = 0;
     ingredients.forEach((ing) => {
       const food = foods.find((f) => f.id === ing.foodId);
       if (!food) return;
-      const r = Number(ing.grams) / 100;
-      kcal += food.kcal * r;
-      protein += food.protein * r;
-      carbs += food.carbs * r;
-      fats += food.fats * r;
+      const macros = macrosForFood(food, Number(ing.grams) || 0);
+      kcal += macros.kcal;
+      protein += macros.protein;
+      carbs += macros.carbs;
+      fats += macros.fats;
     });
     const fw = Number(finalWeight) || 0;
     if (fw <= 0) return null;
@@ -69,6 +93,7 @@ export function RecipeEditor({ id, open, onClose }: Props) {
       name,
       ingredients: ingredients.map((i) => ({ foodId: i.foodId, grams: Number(i.grams) })),
       finalWeight: fw,
+      unit,
       notes,
     };
     if (existing) updateRecipe(existing.id, payload);
@@ -103,25 +128,27 @@ export function RecipeEditor({ id, open, onClose }: Props) {
           {ingredients.map((ing, idx) => {
             const food = foods.find((f) => f.id === ing.foodId);
             if (!food) return null;
+            const macros = macrosForFood(food, Number(ing.grams) || 0);
+            const unitLabel = ingredientUnitLabel(food);
             return (
               <div key={idx} className="flex items-center gap-2.5 bg-surface-2 rounded-sm px-3 py-2.5">
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold truncate">{food.name}</div>
                   <div className="tnum text-[11px] text-ink-3 mt-0.5">
-                    {Math.round((food.kcal * Number(ing.grams)) / 100)} kcal
+                    {Math.round(macros.kcal)} kcal
                   </div>
                 </div>
                 <input
                   type="text"
-                  inputMode="numeric"
+                  inputMode="decimal"
                   value={ing.grams}
                   onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, "");
-                    setIngredients((is) => is.map((x, i) => (i === idx ? { ...x, grams: Number(v) } : x)));
+                    const v = parseIngredientAmount(e.target.value);
+                    setIngredients((is) => is.map((x, i) => (i === idx ? { ...x, grams: v } : x)));
                   }}
                   className="w-16 text-right bg-surface rounded-xs px-2.5 py-1.5 text-[13px] font-semibold text-ink"
                 />
-                <span className="text-xs text-ink-3">g</span>
+                <span className="text-xs text-ink-3">{unitLabel}</span>
                 <button
                   type="button"
                   onClick={() => setIngredients((is) => is.filter((_, i) => i !== idx))}
@@ -144,8 +171,8 @@ export function RecipeEditor({ id, open, onClose }: Props) {
           <Field
             label="Peso final de la receta cocida"
             hint={
-              totalIngWeight > 0
-                ? `Peso crudo: ${totalIngWeight.toFixed(0)} g. El cocido suele ser distinto por agua que pierde o gana.`
+              rawWeightLabel
+                ? `Ingredientes: ${rawWeightLabel}. El peso cocido suele ser distinto por agua que pierde o gana.`
                 : undefined
             }
           >
@@ -189,7 +216,8 @@ export function RecipeEditor({ id, open, onClose }: Props) {
         {pickerOpen && (
           <IngredientPicker
             onPick={(foodId) => {
-              setIngredients((is) => [...is, { foodId, grams: 100 }]);
+              const food = foods.find((f) => f.id === foodId);
+              setIngredients((is) => [...is, { foodId, grams: defaultIngredientAmount(food) }]);
               setPickerOpen(false);
             }}
             onClose={() => setPickerOpen(false)}
@@ -198,6 +226,25 @@ export function RecipeEditor({ id, open, onClose }: Props) {
       </div>
     </Sheet>
   );
+}
+
+function defaultIngredientAmount(food?: Food) {
+  return food?.unit === "unidad" ? 1 : 100;
+}
+
+function ingredientUnitLabel(food: Food) {
+  if (food.unit === "unidad") return "unid.";
+  return food.unit;
+}
+
+function baseUnitLabel(food: Food) {
+  if (food.unit === "unidad") return "1 unidad";
+  return `100 ${food.unit}`;
+}
+
+function parseIngredientAmount(value: string) {
+  const normalized = value.replace(",", ".").replace(/[^\d.]/g, "");
+  return Number(normalized) || 0;
 }
 
 function IngredientPicker({
@@ -229,7 +276,7 @@ function IngredientPicker({
             <div className="flex-1">
               <div className="font-semibold text-sm">{f.name}</div>
               <div className="tnum text-xs text-ink-3 mt-0.5">
-                {f.kcal} kcal · {f.protein} g prot · 100 {f.unit}
+                {f.kcal} kcal · {f.protein} g prot · {baseUnitLabel(f)}
               </div>
             </div>
             <Plus size={18} />

@@ -5,7 +5,7 @@ import {
 } from "react";
 import * as db from "./db";
 import type {
-  DailyNotes, DayKind, Food, Goals, MealEntry, Measurement,
+  DailyNotes, Food, Goals, MealEntry, Measurement,
   Recipe, MealType, User, DaySummary,
 } from "./types";
 import { DEFAULT_GOALS } from "./types";
@@ -17,7 +17,6 @@ interface AppState {
   measurements: Measurement[];
   weekData: DaySummary[];
   goals: Goals;
-  dayKind: DayKind;
   water: number;
   notes: DailyNotes;
   user: User | null;
@@ -35,7 +34,6 @@ interface AppState {
   removeEntry: (id: string) => Promise<void>;
   addMeasurement: (measurement: Measurement) => Promise<void>;
   setGoals: (goals: Goals) => Promise<void>;
-  setDayKind: (kind: DayKind) => Promise<void>;
   setWater: (water: number) => Promise<void>;
   setNotes: (notes: DailyNotes) => Promise<void>;
   signOut: () => Promise<void>;
@@ -71,7 +69,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [weekData, setWeekData] = useState<DaySummary[]>([]);
   const [goals, setGoalsState] = useState<Goals>(DEFAULT_GOALS);
-  const [dayKind, setDayKindState] = useState<DayKind>("deficit");
   const [water, setWaterState] = useState(0);
   const [notes, setNotesState] = useState<DailyNotes>({ hunger: 3, energy: 3, digestion: "" });
   const [user, setUser] = useState<User | null>(null);
@@ -119,7 +116,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setMeasurements(measurementsData);
         setGoalsState(goalsData);
         setWeekData(week);
-        setDayKindState(log.dayKind ?? "deficit");
         setWaterState(log.waterMl ?? 0);
         setNotesState({
           hunger: log.hunger ?? 3,
@@ -204,11 +200,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setGoalsState(saved);
   }, []);
 
-  const setDayKind = useCallback(async (kind: DayKind) => {
-    await db.updateDailyLog(dateString(), { dayKind: kind });
-    setDayKindState(kind);
-  }, []);
-
   const setWater = useCallback(async (nextWater: number) => {
     await db.updateDailyLog(dateString(), { waterMl: nextWater });
     setWaterState(nextWater);
@@ -231,19 +222,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AppState>(() => ({
     foods, recipes, entries, measurements, weekData,
-    goals, dayKind, water, notes, user, loading,
+    goals, water, notes, user, loading,
     addFood, updateFood, removeFood,
     addRecipe, updateRecipe, removeRecipe,
     addEntry, removeEntry, addMeasurement,
-    setGoals, setDayKind, setWater, setNotes, signOut,
+    setGoals, setWater, setNotes, signOut,
     modal, openAddMeal, closeModal,
   }), [
     foods, recipes, entries, measurements, weekData,
-    goals, dayKind, water, notes, user, loading,
+    goals, water, notes, user, loading,
     addFood, updateFood, removeFood,
     addRecipe, updateRecipe, removeRecipe,
     addEntry, removeEntry, addMeasurement,
-    setGoals, setDayKind, setWater, setNotes, signOut,
+    setGoals, setWater, setNotes, signOut,
     modal, openAddMeal, closeModal,
   ]);
 

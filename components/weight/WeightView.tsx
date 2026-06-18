@@ -16,7 +16,6 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
 import { Card } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/Chip";
 import { Field, TextInput } from "@/components/ui/TextInput";
 import { Button } from "@/components/ui/Button";
 import { BigNum } from "@/components/ui/Stats";
@@ -49,7 +48,6 @@ export function WeightView() {
   const latest = measurements.length > 0 ? measurements[0] : null;
   const prev = measurements.length > 1 ? measurements[1] : null;
 
-  const [tab, setTab] = useState<"chart" | "log">("chart");
   const [selected, setSelected] = useState<MetricKey>("weight");
   const [date, setDate] = useState(todayInputDate());
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -73,7 +71,6 @@ export function WeightView() {
     setForm({});
     setDate(todayInputDate());
     setIsDatePickerOpen(false);
-    setTab("chart");
   };
 
   const chartData = [...measurements].reverse().map((d) => ({
@@ -85,273 +82,259 @@ export function WeightView() {
   }));
 
   return (
-      <div className="md:px-9 md:py-6">
-        <div className="px-5 pt-4 pb-3 md:px-0 md:pt-0">
-          <h1 className="font-extrabold text-[34px] leading-none tracking-[-0.03em]">
-            Peso y medidas
-          </h1>
-        </div>
+    <div className="md:px-9 md:py-6">
+      <div className="px-5 pt-4 pb-4 md:px-0 md:pt-0">
+        <h1 className="font-extrabold text-[34px] leading-none tracking-[-0.03em]">
+          Peso y medidas
+        </h1>
+        <p className="mt-2 max-w-xl text-sm text-ink-2">
+          Un tablero tranquilo para mirar tendencia, no para perseguir un número aislado.
+        </p>
+      </div>
 
-        <div className="px-5 md:px-0 pb-4">
-          <Card padding={20}>
-            <div className="flex items-end justify-between">
-              <div>
-                <div className="text-[11px] font-bold text-ink-3 uppercase tracking-wider">
-                  Último peso
+      <div className="grid gap-5 px-5 md:px-0 xl:grid-cols-[minmax(0,1fr)_390px]">
+        <div className="space-y-5">
+          <div className="grid gap-5 md:grid-cols-[260px_minmax(0,1fr)]">
+            <Card padding={22} className="!bg-surface-2 !border-transparent">
+              <div className="text-[11px] font-bold text-ink-3 uppercase tracking-wider">Último peso</div>
+              <BigNum
+                value={latest?.weight != null ? latest.weight.toFixed(1) : "—"}
+                unit="kg"
+                size={52}
+                className="mt-3"
+              />
+              <div className="text-xs text-ink-3 mt-2">
+                {latest?.date
+                  ? new Date(latest.date).toLocaleDateString("es-AR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                  : "Sin registros todavía"}
+              </div>
+              {prev?.weight != null && latest?.weight != null && (
+                <div className="mt-5">
+                  <DeltaPill from={prev.weight} to={latest.weight} unit="kg" />
                 </div>
+              )}
+            </Card>
 
-                <BigNum
-                    value={latest?.weight != null ? latest.weight.toFixed(1) : "—"}
-                    unit="kg"
-                    size={48}
-                />
-
-                <div className="text-xs text-ink-3 mt-1">
-                  {latest?.date
-                      ? new Date(latest.date).toLocaleDateString("es-AR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })
-                      : "Sin registros todavía"}
+            <Card padding={20}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-bold text-ink-3 uppercase tracking-wider">
+                    {m.label} · tendencia
+                  </div>
+                  <BigNum
+                    value={latest?.[m.key] != null ? Number(latest[m.key]).toFixed(1) : "—"}
+                    unit={m.unit}
+                    size={30}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex flex-wrap justify-end gap-1.5">
+                  {METRICS.map((x) => (
+                    <button
+                      key={x.key}
+                      type="button"
+                      onClick={() => setSelected(x.key)}
+                      className={clsx(
+                        "h-8 rounded-pill px-3 text-[12px] font-semibold transition-colors",
+                        selected === x.key
+                          ? "bg-primary text-on-primary"
+                          : "bg-surface-2 text-ink-2 hover:text-ink",
+                      )}
+                    >
+                      {x.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {prev?.weight != null && latest?.weight != null && (
-                  <DeltaPill from={prev.weight} to={latest.weight} unit="kg" />
-              )}
-            </div>
-          </Card>
-        </div>
+              <div className="h-[220px] mt-3">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="ng" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor={m.color} stopOpacity={0.2} />
+                        <stop offset="100%" stopColor={m.color} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fill: "var(--ink-3)" }}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis
+                      domain={["dataMin - 0.5", "dataMax + 0.5"]}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fill: "var(--ink-3)" }}
+                      width={32}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 10,
+                        fontSize: 12,
+                      }}
+                      formatter={(v: number) => [`${v} ${m.unit}`, m.label]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke={m.color}
+                      strokeWidth={2.5}
+                      fill="url(#ng)"
+                      dot={{ r: 2.5, fill: "var(--surface)", stroke: m.color, strokeWidth: 1.5 }}
+                      activeDot={{ r: 4 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </div>
 
-        <div className="px-5 md:px-0 pb-4">
-          <div className="flex bg-surface-2 rounded-pill p-1">
-            {([
-              { id: "chart", l: "Gráficos" },
-              { id: "log", l: "Registrar" },
-            ] as const).map((t) => (
-                <button
-                    key={t.id}
-                    onClick={() => setTab(t.id)}
-                    className={clsx(
-                        "flex-1 h-9 rounded-pill text-[13px] font-semibold transition-all",
-                        tab === t.id ? "bg-surface text-ink shadow-1" : "text-ink-2",
-                    )}
-                >
-                  {t.l}
-                </button>
-            ))}
+          <div>
+            <h2 className="font-extrabold text-[22px] tracking-tight mb-3">Medidas actuales</h2>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {METRICS.filter((metric) => metric.key !== "weight").map((metric) => (
+                <MetricCard
+                  key={metric.key}
+                  metric={metric}
+                  value={latest?.[metric.key] != null ? Number(latest[metric.key]) : null}
+                  previous={prev?.[metric.key] != null ? Number(prev[metric.key]) : null}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
-        {tab === "chart" ? (
-            <>
-              <div className="no-scrollbar px-5 md:px-0 pb-4 flex gap-1.5 overflow-x-auto">
-                {METRICS.map((x) => (
-                    <Chip key={x.key} active={selected === x.key} onClick={() => setSelected(x.key)}>
-                      {x.label}
-                    </Chip>
-                ))}
-              </div>
-
-              <div className="px-5 md:px-0">
-                <Card padding={20}>
-                  <div className="flex justify-between items-baseline mb-3">
-                    <div>
-                      <div className="text-[11px] font-bold text-ink-3 uppercase tracking-wider">
-                        {m.label} · historial
-                      </div>
-
-                      <BigNum
-                          value={latest?.[m.key] != null ? Number(latest[m.key]).toFixed(1) : "—"}
-                          unit={m.unit}
-                          size={28}
-                      />
-                    </div>
-
-                    {measurements.length > 1 && latest?.[m.key] != null && (
-                        <DeltaPill
-                            from={Number(measurements[0][m.key])}
-                            to={Number(latest[m.key])}
-                            unit={m.unit}
-                            small
-                        />
-                    )}
-                  </div>
-
-                  <div className="h-[180px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="ng" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor={m.color} stopOpacity={0.2} />
-                            <stop offset="100%" stopColor={m.color} stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-
-                        <XAxis
-                            dataKey="date"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 10, fill: "var(--ink-3)" }}
-                            interval="preserveStartEnd"
-                        />
-
-                        <YAxis
-                            domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 10, fill: "var(--ink-3)" }}
-                            width={32}
-                        />
-
-                        <Tooltip
-                            contentStyle={{
-                              background: "var(--surface)",
-                              border: "1px solid var(--border)",
-                              borderRadius: 10,
-                              fontSize: 12,
-                            }}
-                            formatter={(v: number) => [`${v} ${m.unit}`, m.label]}
-                        />
-
-                        <Area
-                            type="monotone"
-                            dataKey="value"
-                            stroke={m.color}
-                            strokeWidth={2}
-                            fill="url(#ng)"
-                            dot={{
-                              r: 2.5,
-                              fill: "var(--surface)",
-                              stroke: m.color,
-                              strokeWidth: 1.5,
-                            }}
-                            activeDot={{ r: 4 }}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              </div>
-
-              <div className="px-5 md:px-0 mt-5">
-                <h2 className="font-extrabold text-[22px] tracking-tight mb-3">
-                  Historial reciente
-                </h2>
-
-                <Card padding={0}>
-                  {measurements.length === 0 ? (
-                      <div className="px-4 py-8 text-center text-sm text-ink-3">
-                        Todavía no registraste medidas.
-                      </div>
-                  ) : (
-                      measurements
-                          .slice()
-                          .reverse()
-                          .slice(0, 5)
-                          .map((d, i) => (
-                              <div
-                                  key={`${d.date}-${i}`}
-                                  className={clsx(
-                                      "px-4 py-3 flex items-center justify-between",
-                                      i > 0 && "border-t border-border",
-                                  )}
-                              >
-                                <div>
-                                  <div className="text-[13px] font-semibold">
-                                    {new Date(d.date).toLocaleDateString("es-AR", {
-                                      day: "numeric",
-                                      month: "short",
-                                    })}
-                                  </div>
-
-                                  <div className="tnum text-[11px] text-ink-3 mt-0.5">
-                                    cintura {d.waist}cm · cadera {d.hips}cm
-                                  </div>
-                                </div>
-
-                                <div className="tnum font-extrabold text-[22px] tracking-[-0.035em]">
-                                  {d.weight.toFixed(1)}
-                                  <span className="text-[11px] text-ink-3 ml-0.5 font-medium">
-                          kg
-                        </span>
-                                </div>
-                              </div>
-                          ))
-                  )}
-                </Card>
-              </div>
-            </>
-        ) : (
-            <div className="px-5 md:px-0">
-              <Card padding={20}>
-                <div className="mb-4">
-                  <Field label="Fecha">
-                    <div className="relative">
-                      <button
-                          type="button"
-                          onClick={() => setIsDatePickerOpen((v) => !v)}
-                          className="
-                      h-11 w-full rounded-xl border border-border bg-surface
-                      px-3 text-sm font-medium text-ink
-                      flex items-center justify-between
-                      hover:border-primary transition
-                    "
-                      >
+        <div className="space-y-5">
+          <Card padding={20}>
+            <h2 className="font-extrabold text-[22px] tracking-tight mb-4">Registrar</h2>
+            <div className="mb-4">
+              <Field label="Fecha">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsDatePickerOpen((v) => !v)}
+                    className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm font-medium text-ink flex items-center justify-between hover:border-primary transition"
+                  >
                     <span>
                       {selectedDate
-                          ? format(selectedDate, "d 'de' MMMM yyyy", { locale: es })
-                          : "Seleccionar fecha"}
+                        ? format(selectedDate, "d 'de' MMMM yyyy", { locale: es })
+                        : "Seleccionar fecha"}
                     </span>
+                    <CalendarIcon size={16} className="text-ink-3" />
+                  </button>
 
-                        <CalendarIcon size={16} className="text-ink-3" />
-                      </button>
-
-                      {isDatePickerOpen && (
-                          <div className="absolute left-0 top-[52px] z-50 rounded-2xl border border-border bg-surface p-3 shadow-2">
-                            <DayPicker
-                                mode="single"
-                                selected={selectedDate}
-                                onSelect={(d) => {
-                                  if (!d) return;
-
-                                  setDate(format(d, "yyyy-MM-dd"));
-                                  setIsDatePickerOpen(false);
-                                }}
-                                locale={es}
-                            />
-                          </div>
-                      )}
+                  {isDatePickerOpen && (
+                    <div className="absolute left-0 top-[52px] z-50 rounded-2xl border border-border bg-surface p-3 shadow-2">
+                      <DayPicker
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(d) => {
+                          if (!d) return;
+                          setDate(format(d, "yyyy-MM-dd"));
+                          setIsDatePickerOpen(false);
+                        }}
+                        locale={es}
+                      />
                     </div>
-                  </Field>
+                  )}
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {METRICS.map((x) => (
-                      <Field key={x.key} label={x.label}>
-                        <TextInput
-                            value={form[x.key] ?? ""}
-                            onChange={(v) => setForm({ ...form, [x.key]: v })}
-                            suffix={x.unit}
-                            inputMode="decimal"
-                            placeholder={String(latest?.[x.key] ?? "")}
-                        />
-                      </Field>
-                  ))}
-                </div>
-
-                <Button size="lg" full onClick={onSave} className="mt-4">
-                  Guardar medidas
-                </Button>
-              </Card>
-
-              <p className="text-xs text-ink-3 text-center mt-3">
-                Lo ideal es medir mismo día, mismo horario, sin desayunar.
-              </p>
+              </Field>
             </div>
-        )}
+
+            <div className="grid grid-cols-2 gap-3">
+              {METRICS.map((x) => (
+                <Field key={x.key} label={x.label}>
+                  <TextInput
+                    value={form[x.key] ?? ""}
+                    onChange={(v) => setForm({ ...form, [x.key]: v })}
+                    suffix={x.unit}
+                    inputMode="decimal"
+                    placeholder={String(latest?.[x.key] ?? "")}
+                  />
+                </Field>
+              ))}
+            </div>
+
+            <Button size="lg" full onClick={onSave} className="mt-4">
+              Guardar medidas
+            </Button>
+            <p className="text-xs text-ink-3 text-center mt-3">
+              Ideal: mismo día, mismo horario, sin desayunar.
+            </p>
+          </Card>
+
+          <Card padding={0} className="overflow-hidden">
+            <div className="px-4 py-4 border-b border-border">
+              <h2 className="font-extrabold text-[20px] tracking-tight">Historial reciente</h2>
+            </div>
+            {measurements.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-ink-3">
+                Todavía no registraste medidas.
+              </div>
+            ) : (
+              measurements.slice(0, 6).map((d, i) => (
+                <div
+                  key={`${d.date}-${i}`}
+                  className={clsx("px-4 py-3 flex items-center justify-between", i > 0 && "border-t border-border")}
+                >
+                  <div>
+                    <div className="text-[13px] font-semibold">
+                      {new Date(d.date).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}
+                    </div>
+                    <div className="tnum text-[11px] text-ink-3 mt-0.5">
+                      cintura {d.waist} cm · cadera {d.hips} cm
+                    </div>
+                  </div>
+                  <div className="tnum font-extrabold text-[22px] tracking-[-0.035em]">
+                    {d.weight.toFixed(1)}
+                    <span className="text-[11px] text-ink-3 ml-0.5 font-medium">kg</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </Card>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function MetricCard({
+  metric,
+  value,
+  previous,
+}: {
+  metric: Metric;
+  value: number | null;
+  previous: number | null;
+}) {
+  return (
+    <Card padding={16}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-bold text-ink-3 uppercase tracking-wider">{metric.label}</div>
+          <div className="tnum mt-2 text-[28px] font-extrabold leading-none tracking-[-0.035em]">
+            {value != null ? value.toFixed(1) : "—"}
+            <span className="ml-1 text-xs font-semibold text-ink-3">{metric.unit}</span>
+          </div>
+        </div>
+        <div className="h-9 w-9 rounded-sm" style={{ backgroundColor: metric.color, opacity: 0.14 }} />
+      </div>
+      {previous != null && value != null && (
+        <div className="mt-4">
+          <DeltaPill from={previous} to={value} unit={metric.unit} small />
+        </div>
+      )}
+    </Card>
   );
 }
 

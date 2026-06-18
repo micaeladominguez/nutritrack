@@ -36,6 +36,7 @@ export const SAMPLE_RECIPES: Recipe[] = [
       { foodId: "f16", grams: 10 },
     ],
     finalWeight: 550,
+    unit: "g",
     notes: "Almuerzo go-to. Pollo grillado, arroz, palta y brócoli salteado.",
   },
   {
@@ -48,6 +49,7 @@ export const SAMPLE_RECIPES: Recipe[] = [
       { foodId: "f8", grams: 15 },
     ],
     finalWeight: 345,
+    unit: "g",
     notes: "Desayuno post-entreno.",
   },
   {
@@ -60,6 +62,7 @@ export const SAMPLE_RECIPES: Recipe[] = [
       { foodId: "f15", grams: 40 },
     ],
     finalWeight: 250,
+    unit: "g",
     notes: "",
   },
 ];
@@ -85,11 +88,11 @@ export const SAMPLE_MEASUREMENTS: Measurement[] = [
 ];
 
 export const SAMPLE_WEEK: DaySummary[] = [
-  { date: "2026-05-16", dayLabel: "Sáb", dayNum: 16, kcal: 2480, protein: 175, kind: "mantenimiento", weight: null, workout: "rest" },
-  { date: "2026-05-17", dayLabel: "Dom", dayNum: 17, kcal: 2310, protein: 168, kind: "deficit", weight: null, workout: "rest" },
-  { date: "2026-05-18", dayLabel: "Lun", dayNum: 18, kcal: 2620, protein: 192, kind: "entreno", weight: 75.7, workout: "fuerza" },
-  { date: "2026-05-19", dayLabel: "Mar", dayNum: 19, kcal: 2280, protein: 178, kind: "deficit", weight: null, workout: "rest" },
-  { date: "2026-05-20", dayLabel: "Mié", dayNum: 20, kcal: 2640, protein: 195, kind: "entreno", weight: null, workout: "fuerza" },
-  { date: "2026-05-21", dayLabel: "Jue", dayNum: 21, kcal: 2710, protein: 182, kind: "partido", weight: null, workout: "futbol" },
-  { date: "2026-05-22", dayLabel: "Vie", dayNum: 22, kcal: 1670, protein: 124, kind: "deficit", weight: null, workout: "rest", isToday: true },
+  { date: "2026-05-16", dayLabel: "Sáb", dayNum: 16, kcal: 2480, protein: 175, weight: null, workout: "rest" },
+  { date: "2026-05-17", dayLabel: "Dom", dayNum: 17, kcal: 2310, protein: 168, weight: null, workout: "rest" },
+  { date: "2026-05-18", dayLabel: "Lun", dayNum: 18, kcal: 2620, protein: 192, weight: 75.7, workout: "fuerza" },
+  { date: "2026-05-19", dayLabel: "Mar", dayNum: 19, kcal: 2280, protein: 178, weight: null, workout: "rest" },
+  { date: "2026-05-20", dayLabel: "Mié", dayNum: 20, kcal: 2640, protein: 195, weight: null, workout: "fuerza" },
+  { date: "2026-05-21", dayLabel: "Jue", dayNum: 21, kcal: 2710, protein: 182, weight: null, workout: "futbol" },
+  { date: "2026-05-22", dayLabel: "Vie", dayNum: 22, kcal: 1670, protein: 124, weight: null, workout: "rest", isToday: true },
 ];

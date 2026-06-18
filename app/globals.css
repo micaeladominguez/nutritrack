@@ -22,15 +22,15 @@
   --border-strong: #d4ceb8;
 
   /* brand */
-  --primary: #2d4a3e;
-  --primary-hover: #243d33;
-  --primary-soft: #e7eee8;
+  --primary: #4f7464;
+  --primary-hover: #446858;
+  --primary-soft: #edf3ee;
   --on-primary: #faf8f3;
   --accent: #c4633a;
   --accent-soft: #f4dccf;
 
   /* macros */
-  --kcal: #2d4a3e;
+  --kcal: #4f7464;
   --protein: #c4633a;
   --carbs: #c9a358;
   --fats: #a89478;

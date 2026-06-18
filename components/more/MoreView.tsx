@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Scale, Dumbbell, Flame, User as UserIcon, Bell, LogOut, ChevronRight } from "lucide-react";
+import { Scale, Flame, User as UserIcon, Bell, LogOut, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { useApp } from "@/lib/store";
 
@@ -14,7 +14,6 @@ export function MoreView() {
       title: "Tu cuerpo",
       items: [
         { icon: Scale, label: "Peso y medidas", onClick: () => router.push("/weight") },
-        { icon: Dumbbell, label: "Entrenamientos", onClick: () => {} },
         { icon: Flame, label: "Objetivos", onClick: () => {} },
       ],
     },
@@ -31,7 +30,7 @@ export function MoreView() {
   return (
     <div>
       <div className="px-5 pt-4 pb-3">
-        <h1 className="font-extrabold text-[34px] leading-none tracking-[-0.03em]">Más</h1>
+        <h1 className="font-extrabold text-[34px] leading-none tracking-[-0.03em]">Configuración</h1>
       </div>
 
       <div className="px-5 pb-4">

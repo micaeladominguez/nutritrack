@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/nav/AppShell";
 import { AddMealSheet } from "@/components/meals/AddMealSheet";
+import { OnboardingGate } from "@/components/onboarding/OnboardingGate";
 
 /**
  * Authenticated app shell. Renders the responsive sidebar (md+) /
@@ -8,9 +9,11 @@ import { AddMealSheet } from "@/components/meals/AddMealSheet";
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AppShell>
-      {children}
-      <AddMealSheet />
-    </AppShell>
+    <OnboardingGate>
+      <AppShell>
+        {children}
+        <AddMealSheet />
+      </AppShell>
+    </OnboardingGate>
   );
 }

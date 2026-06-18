@@ -7,20 +7,21 @@ interface Props {
   value: number;
   goal: number;
   onChange: (n: number) => void;
+  compact?: boolean;
 }
 
-export function WaterCard({ value, goal, onChange }: Props) {
+export function WaterCard({ value, goal, onChange, compact = false }: Props) {
   const cups = 8;
   const cupMl = goal / cups;
   const filled = Math.floor(value / cupMl);
 
   return (
-    <Card padding={18}>
-      <div className="flex items-center justify-between mb-3.5">
+    <Card padding={compact ? 12 : 18}>
+      <div className={`flex items-center justify-between ${compact ? "mb-2" : "mb-3.5"}`}>
         <div>
           <div className="text-[11px] font-bold text-ink-3 uppercase tracking-wider">Agua</div>
           <div className="flex items-baseline gap-1.5 mt-1">
-            <span className="tnum font-extrabold text-[26px] tracking-[-0.03em]">
+            <span className={`tnum font-extrabold tracking-[-0.03em] ${compact ? "text-[24px]" : "text-[26px]"}`}>
               {(value / 1000).toFixed(1)}
             </span>
             <span className="text-xs text-ink-3 font-semibold">/ {(goal / 1000).toFixed(1)} L</span>
@@ -49,7 +50,7 @@ export function WaterCard({ value, goal, onChange }: Props) {
         {Array.from({ length: cups }).map((_, i) => (
           <div
             key={i}
-            className="flex-1 h-[18px] rounded-[5px] transition-colors duration-200"
+            className={`flex-1 rounded-[5px] transition-colors duration-200 ${compact ? "h-[14px]" : "h-[18px]"}`}
             style={{ backgroundColor: i < filled ? "var(--water)" : "var(--surface-3)" }}
           />
         ))}

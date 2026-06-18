@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Soup, BookOpen, CalendarDays, Plus, MoreHorizontal, Scale, LogOut, Bell, User, Flame, Dumbbell } from "lucide-react";
+import { Home, Soup, BookOpen, CalendarDays, Plus, Settings, Scale, LogOut } from "lucide-react";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { useApp } from "@/lib/store";
 import { clsx } from "@/lib/clsx";
@@ -92,41 +92,42 @@ function BottomNav() {
 
   const items: NavItem[] = [
     ...NAV,
-    { id: "more", label: "Más", href: "/more", icon: MoreHorizontal },
+    { id: "more", label: "Config.", href: "/more", icon: Settings },
   ];
 
   return (
-    <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface border-t border-border pt-2 px-2"
-      style={{ paddingBottom: "max(1.75rem, env(safe-area-inset-bottom))" }}
-    >
-      <div className="flex justify-around items-center relative">
-        {items.map((it) => {
-          const active = pathname === it.href || (it.href === "/" && pathname === "/");
-          const Icon = it.icon;
-          return (
-            <button
-              key={it.id}
-              onClick={() => router.push(it.href)}
-              className={clsx(
-                "flex flex-col items-center gap-0.5 px-2.5 py-1.5",
-                active ? "text-ink" : "text-ink-3",
-              )}
-            >
-              <Icon size={22} strokeWidth={active ? 2.2 : 1.7} />
-              <span className={clsx("text-[10px] tracking-tight", active ? "font-bold" : "font-semibold")}>{it.label}</span>
-            </button>
-          );
-        })}
-      </div>
-      {/* FAB */}
+    <>
       <button
         onClick={() => openAddMeal("snack")}
-        className="absolute right-4 -top-7 w-14 h-14 rounded-full bg-ink text-on-primary border-[3px] border-surface flex items-center justify-center shadow-3"
+        className="md:hidden fixed right-5 top-5 z-40 w-12 h-12 rounded-full bg-ink text-on-primary border-[3px] border-surface flex items-center justify-center shadow-3"
         aria-label="Agregar comida"
       >
-        <Plus size={24} />
+        <Plus size={22} />
       </button>
-    </nav>
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface border-t border-border pt-2 px-2"
+        style={{ paddingBottom: "max(1.75rem, env(safe-area-inset-bottom))" }}
+      >
+        <div className="flex justify-around items-center relative">
+          {items.map((it) => {
+            const active = pathname === it.href || (it.href === "/" && pathname === "/");
+            const Icon = it.icon;
+            return (
+              <button
+                key={it.id}
+                onClick={() => router.push(it.href)}
+                className={clsx(
+                  "flex flex-col items-center gap-0.5 px-2.5 py-1.5",
+                  active ? "text-ink" : "text-ink-3",
+                )}
+              >
+                <Icon size={22} strokeWidth={active ? 2.2 : 1.7} />
+                <span className={clsx("text-[10px] tracking-tight", active ? "font-bold" : "font-semibold")}>{it.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }

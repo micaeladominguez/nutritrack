@@ -8,6 +8,7 @@ create extension if not exists "uuid-ossp";
 -- ── FOOD ITEMS ──────────────────────────────────────────────
 create table food_items (
   id           uuid primary key default uuid_generate_v4(),
+  -- Creator only. Foods are a shared catalog; recipes and logs stay per user.
   user_id      uuid not null references auth.users(id) on delete cascade,
   name         text not null,
   brand        text,
@@ -26,6 +27,7 @@ create table recipes (
   user_id       uuid not null references auth.users(id) on delete cascade,
   name          text not null,
   final_weight  numeric not null default 100,
+  unit          text not null default 'g' check (unit in ('g','unidad')),
   notes         text not null default '',
   created_at    timestamptz default now()
 );
@@ -42,8 +44,6 @@ create table daily_logs (
   id            uuid primary key default uuid_generate_v4(),
   user_id       uuid not null references auth.users(id) on delete cascade,
   date          date not null,
-  day_kind      text not null default 'deficit'
-                  check (day_kind in ('deficit','mantenimiento','entreno','partido')),
   water_ml      numeric not null default 0,
   hunger        int check (hunger between 1 and 5),
   energy        int check (energy between 1 and 5),
@@ -132,9 +132,13 @@ alter table measurements      enable row level security;
 alter table user_goals        enable row level security;
 alter table profiles          enable row level security;
 
--- food_items
-create policy "own food_items" on food_items for all
-  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- food_items are shared: every signed-in user can read the catalog.
+create policy "read shared food_items" on food_items for select
+  using (auth.uid() is not null);
+
+-- Signed-in users can add foods to the shared catalog.
+create policy "insert shared food_items" on food_items for insert
+  with check (auth.uid() = user_id);
 
 -- recipes
 create policy "own recipes" on recipes for all

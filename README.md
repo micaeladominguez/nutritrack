@@ -33,7 +33,7 @@ app/
   (app)/                  # Rutas autenticadas
     layout.tsx            # Sidebar/bottom nav + AddMealSheet global
     page.tsx              # Dashboard (Hoy)
-    foods/page.tsx        # Mis alimentos
+    foods/page.tsx        # Base de alimentos compartida
     recipes/page.tsx      # Mis recetas
     week/page.tsx         # Registro semanal
     weight/page.tsx       # Peso y medidas
@@ -69,7 +69,7 @@ solo lugar**.
 ```css
 :root {
   --bg: #faf8f3;        /* warm cream */
-  --primary: #2d4a3e;   /* deep sage */
+  --primary: #4f7464;   /* sage */
   --accent: #c4633a;    /* terracotta */
   --protein: #c4633a;
   --carbs: #c9a358;

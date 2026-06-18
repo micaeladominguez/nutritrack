@@ -53,26 +53,46 @@ export function AddMealSheet() {
 
     const recipeResults: SelectedItem[] = recipes.filter(matchRecipe).map((r) => ({ kind: "recipe", item: r }));
     const foodResults: SelectedItem[] = foods.filter(matchFood).map((f) => ({ kind: "food", item: f }));
-    return [...recipeResults, ...foodResults].slice(0, 40);
+    return [...recipeResults, ...foodResults].slice(0, 6);
   }, [query, foods, recipes]);
 
   const baseMacros = useMemo(() => {
     if (!selected) return null;
-    if (selected.kind === "food") return macrosForFood(selected.item, 100);
+    if (selected.kind === "food") {
+      return {
+        kcal: selected.item.kcal,
+        protein: selected.item.protein,
+        carbs: selected.item.carbs,
+        fats: selected.item.fats,
+        fiber: selected.item.fiber,
+      };
+    }
     return recipeMacrosPer100(selected.item, foods);
   }, [selected, foods]);
 
-  const preview = baseMacros && {
-    kcal: (baseMacros.kcal * grams) / 100,
-    protein: (baseMacros.protein * grams) / 100,
-    carbs: (baseMacros.carbs * grams) / 100,
-    fats: (baseMacros.fats * grams) / 100,
-  };
+  const preview = selected && baseMacros
+    ? selected.kind === "food"
+      ? macrosForFood(selected.item, grams)
+      : selected.item.unit === "unidad"
+        ? {
+            kcal: baseMacros.kcal * grams,
+            protein: baseMacros.protein * grams,
+            carbs: baseMacros.carbs * grams,
+            fats: baseMacros.fats * grams,
+            fiber: (baseMacros.fiber ?? 0) * grams,
+          }
+        : {
+          kcal: (baseMacros.kcal * grams) / 100,
+          protein: (baseMacros.protein * grams) / 100,
+          carbs: (baseMacros.carbs * grams) / 100,
+          fats: (baseMacros.fats * grams) / 100,
+          fiber: (baseMacros.fiber ?? 0) * grams / 100,
+        }
+    : null;
 
   const save = () => {
-    if (!selected || !baseMacros) return;
+    if (!selected || !baseMacros || !preview) return;
     const gramsNum = Number(grams) || 100;
-    const r = gramsNum / 100;
     addEntry(
       {
         mealType,
@@ -81,11 +101,11 @@ export function AddMealSheet() {
         grams: gramsNum,
       },
       {
-        kcal: baseMacros.kcal * r,
-        protein: baseMacros.protein * r,
-        carbs: baseMacros.carbs * r,
-        fats: baseMacros.fats * r,
-        fiber: (baseMacros.fiber ?? 0) * r,
+        kcal: preview.kcal,
+        protein: preview.protein,
+        carbs: preview.carbs,
+        fats: preview.fats,
+        fiber: preview.fiber ?? 0,
       }
     );
     closeModal();
@@ -105,7 +125,7 @@ export function AddMealSheet() {
       }
     >
       {/* meal type chips */}
-      <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-3">
+      <div className="no-scrollbar grid grid-cols-2 gap-2 px-5 pb-3 md:grid-cols-3">
         {MEAL_TYPES.map((mt) => {
           const Icon = MEAL_ICONS[mt.id];
           return (
@@ -114,6 +134,7 @@ export function AddMealSheet() {
               active={mealType === mt.id}
               onClick={() => setMealType(mt.id)}
               icon={<Icon size={14} />}
+              className="h-10 justify-center text-[14px]"
             >
               {mt.label}
             </Chip>
@@ -122,12 +143,13 @@ export function AddMealSheet() {
       </div>
 
       {/* search */}
-      <div className="px-5 pb-3">
+      <div className="px-5 pb-4">
         <TextInput
           value={query}
           onChange={setQuery}
           placeholder="Buscar alimento o receta"
           icon={<Search size={18} />}
+          className="h-14"
           autoFocus
         />
       </div>
@@ -137,7 +159,7 @@ export function AddMealSheet() {
         {!selected ? (
           results.length === 0 ? (
             <div className="p-8 text-center text-ink-3 text-sm">
-              Sin resultados. Probá con otra palabra o agregalo en &quot;Mis alimentos&quot;.
+              Sin resultados. Probá con otra palabra o agregalo en &quot;Base de alimentos&quot;.
             </div>
           ) : (
             results.map((r) => (
@@ -145,7 +167,10 @@ export function AddMealSheet() {
                 key={r.kind + r.item.id}
                 result={r}
                 allFoods={foods}
-                onPick={() => setSelected(r)}
+                onPick={() => {
+                  setSelected(r);
+                  setGrams(defaultAmountForSelection(r));
+                }}
               />
             ))
           )
@@ -197,7 +222,7 @@ function ResultRow({
           )}
         </div>
         <div className="tnum text-xs text-ink-3 mt-0.5">
-          {Math.round(macros.kcal)} kcal · {macros.protein.toFixed(1)} g prot · 100g
+          {Math.round(macros.kcal)} kcal · {macros.protein.toFixed(1)} g prot · {baseUnitLabel(result)}
           {result.kind === "food" && result.item.brand && ` · ${result.item.brand}`}
         </div>
       </div>
@@ -216,6 +241,13 @@ function SelectedView({
   onClear: () => void;
 }) {
   const Icon = selected.kind === "recipe" ? BookOpen : Soup;
+  const isUnitAmount = selected.kind === "food"
+    ? selected.item.unit === "unidad"
+    : selected.item.unit === "unidad";
+  const suffix = isUnitAmount ? "unid." : "g";
+  const step = isUnitAmount ? 1 : 25;
+  const quickAmounts = isUnitAmount ? [1, 2, 3, 4] : [50, 100, 150, 200, 300];
+  const amountLabel = isUnitAmount ? "Cantidad de unidades" : "Cantidad";
   return (
     <div className="px-2 pb-5">
       <div className="flex items-center gap-2.5 mb-4">
@@ -230,7 +262,7 @@ function SelectedView({
         <div className="flex-1 min-w-0">
           <div className="font-bold text-base">{selected.item.name}</div>
           <div className="tnum text-xs text-ink-3">
-            Cada 100 g · {Math.round(baseMacros.kcal)} kcal · {baseMacros.protein.toFixed(1)} g prot
+            {baseUnitLabel(selected)} · {Math.round(baseMacros.kcal)} kcal · {baseMacros.protein.toFixed(1)} g prot
           </div>
         </div>
         <button type="button" onClick={onClear} className="text-ink-3 p-1.5" aria-label="Cambiar">
@@ -238,13 +270,13 @@ function SelectedView({
         </button>
       </div>
 
-      <Field label="Cantidad">
+      <Field label={amountLabel}>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setGrams(Math.max(0, grams - 25))}
+            onClick={() => setGrams(Math.max(0, grams - step))}
             className="w-11 h-12 rounded-sm border border-border-strong bg-surface flex items-center justify-center text-ink shrink-0"
-            aria-label="Restar 25 g"
+            aria-label={`Restar ${step} ${suffix}`}
           >
             <Minus size={16} />
           </button>
@@ -252,14 +284,14 @@ function SelectedView({
             value={String(grams)}
             onChange={(v) => setGrams(Number(v.replace(/\D/g, "")) || 0)}
             inputMode="numeric"
-            suffix="g"
+            suffix={suffix}
             className="flex-1"
           />
           <button
             type="button"
-            onClick={() => setGrams(grams + 25)}
+            onClick={() => setGrams(grams + step)}
             className="w-11 h-12 rounded-sm border border-border-strong bg-surface flex items-center justify-center text-ink shrink-0"
-            aria-label="Sumar 25 g"
+            aria-label={`Sumar ${step} ${suffix}`}
           >
             <Plus size={16} />
           </button>
@@ -267,8 +299,8 @@ function SelectedView({
       </Field>
 
       <div className="flex flex-wrap gap-1.5 mt-2.5">
-        {[50, 100, 150, 200, 300].map((p) => (
-          <Chip key={p} onClick={() => setGrams(p)}>{p} g</Chip>
+        {quickAmounts.map((p) => (
+          <Chip key={p} onClick={() => setGrams(p)}>{p} {suffix}</Chip>
         ))}
       </div>
 
@@ -283,6 +315,21 @@ function SelectedView({
       </Card>
     </div>
   );
+}
+
+function baseUnitLabel(result: SelectedItem) {
+  if (result.kind === "recipe") {
+    return result.item.unit === "unidad" ? "Por 1 unidad" : "Cada 100 g";
+  }
+  if (result.item.unit === "unidad") return "Por 1 unidad";
+  return `Cada 100 ${result.item.unit}`;
+}
+
+function defaultAmountForSelection(result: SelectedItem) {
+  return (result.kind === "food" && result.item.unit === "unidad")
+    || (result.kind === "recipe" && result.item.unit === "unidad")
+    ? 1
+    : 100;
 }
 
 function PreviewMacro({ label, value, color }: { label: string; value: string; color: string }) {

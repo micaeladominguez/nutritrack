@@ -11,11 +11,11 @@ export interface Macros {
 export const ZERO_MACROS: Macros = { kcal: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 };
 
 /**
- * Compute macros for an `n`-gram portion of a food row whose values are
- * per-100-gram (or per-100-ml for liquids).
+ * Compute macros for a food amount. Foods in g/ml store values per 100 g/ml;
+ * foods in "unidad" store values per 1 unit.
  */
-export function macrosForFood(food: Food, grams: number): Macros {
-  const r = grams / 100;
+export function macrosForFood(food: Food, amount: number): Macros {
+  const r = food.unit === "unidad" ? amount : amount / 100;
   return {
     kcal: food.kcal * r,
     protein: food.protein * r,
@@ -25,11 +25,6 @@ export function macrosForFood(food: Food, grams: number): Macros {
   };
 }
 
-/**
- * Per-100-g macros for a recipe. We sum the raw ingredient macros and
- * normalize by the recipe's finished (cooked) weight — that's how you
- * get a portion-stable density when you eat e.g. 300 g of the dish.
- */
 export function recipeMacrosPer100(recipe: Recipe, foods: Food[]): Macros & { totalWeight: number } {
   let kcal = 0, protein = 0, carbs = 0, fats = 0, fiber = 0;
   for (const ing of recipe.ingredients) {
@@ -37,6 +32,16 @@ export function recipeMacrosPer100(recipe: Recipe, foods: Food[]): Macros & { to
     if (!food) continue;
     const m = macrosForFood(food, ing.grams);
     kcal += m.kcal; protein += m.protein; carbs += m.carbs; fats += m.fats; fiber += m.fiber;
+  }
+  if (recipe.unit === "unidad") {
+    return {
+      kcal,
+      protein,
+      carbs,
+      fats,
+      fiber,
+      totalWeight: recipe.finalWeight,
+    };
   }
   const fw = recipe.finalWeight || 1;
   const ratio = 100 / fw;
@@ -65,7 +70,7 @@ export function macrosForEntry(
     const recipe = recipes.find((r) => r.id === entry.recipeId);
     if (!recipe) return { ...ZERO_MACROS, name: "—", isRecipe: true };
     const per100 = recipeMacrosPer100(recipe, foods);
-    const r = entry.grams / 100;
+    const r = recipe.unit === "unidad" ? entry.grams : entry.grams / 100;
     return {
       kcal: per100.kcal * r,
       protein: per100.protein * r,

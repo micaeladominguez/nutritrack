@@ -1,4 +1,4 @@
-import type { DayKind, DaySummary, Food, Goals, MealEntry, Measurement, Recipe, User } from "./types";
+import type { DaySummary, Food, Goals, MealEntry, Measurement, Recipe, User } from "./types";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080").replace(/\/$/, "");
 const TOKEN_KEY = "nutritrack_token";
@@ -10,6 +10,7 @@ interface ApiRecipe {
   name: string;
   finalWeight: number;
   notes: string;
+  unit?: Recipe["unit"];
   ingredients: { foodItemId: string; grams: number }[];
 }
 interface ApiMeal {
@@ -21,7 +22,6 @@ interface ApiMeal {
   loggedAt: string;
 }
 export interface DailyLog {
-  dayKind: DayKind;
   waterMl: number;
   hunger: number | null;
   energy: number | null;
@@ -43,9 +43,15 @@ interface ApiWeekDay {
   dayLabel: string;
   kcal: number;
   protein: number;
-  dayKind: DayKind;
   weight: number | null;
   isToday: boolean;
+}
+export interface FoodPage {
+  items: Food[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
 }
 
 export class ApiError extends Error {
@@ -92,6 +98,7 @@ function rowToRecipe(recipe: ApiRecipe): Recipe {
     id: recipe.id,
     name: recipe.name,
     finalWeight: recipe.finalWeight,
+    unit: recipe.unit ?? "g",
     notes: recipe.notes,
     ingredients: recipe.ingredients.map((i) => ({ foodId: i.foodItemId, grams: i.grams })),
   };
@@ -160,6 +167,12 @@ export async function getFoods(): Promise<Food[]> {
   return request<Food[]>("/api/foods");
 }
 
+export async function getFoodsPage(page: number, size = 8, query = ""): Promise<FoodPage> {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  if (query.trim()) params.set("q", query.trim());
+  return request<FoodPage>(`/api/foods/page?${params.toString()}`);
+}
+
 export async function createFood(food: Omit<Food, "id">): Promise<Food> {
   return request<Food>("/api/foods", { method: "POST", body: JSON.stringify(food) });
 }
@@ -181,6 +194,7 @@ function recipePayload(recipe: Omit<Recipe, "id">) {
     name: recipe.name,
     finalWeight: recipe.finalWeight,
     notes: recipe.notes,
+    unit: recipe.unit ?? "g",
     ingredients: recipe.ingredients.map((i) => ({ foodItemId: i.foodId, grams: i.grams })),
   };
 }
@@ -211,7 +225,7 @@ export async function getDailyLog(date = localDate()): Promise<DailyLog> {
 
 export async function updateDailyLog(
   date: string,
-  patch: Partial<{ dayKind: DayKind; waterMl: number; hunger: number; energy: number; digestion: string }>,
+  patch: Partial<{ waterMl: number; hunger: number; energy: number; digestion: string }>,
 ) {
   return request<DailyLog>(`/api/log/${date}`, {
     method: "PATCH",
@@ -268,7 +282,6 @@ export async function getWeekData(mondayDate: string): Promise<DaySummary[]> {
     dayNum: Number(day.date.slice(8, 10)),
     kcal: Math.round(day.kcal),
     protein: Math.round(day.protein),
-    kind: day.dayKind,
     weight: day.weight,
     workout: "rest",
     isToday: day.isToday,
